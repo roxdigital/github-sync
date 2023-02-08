@@ -51,6 +51,7 @@ jobs:
           BOARD_COLUMN_OPENED: 'PR Open'
           BOARD_COLUMN_MERGED: 'Ready to Test'
           BOARD_COLUMN_CLOSED: 'Rejected'
+          BOARD_COLUMN_FEEDBACK: 'PR Open'
         env:
           IGNORE_PROJECT_IDS: '1 2 3'
 
@@ -75,6 +76,7 @@ You may also specify columns you'd like the task to be moved to on every stage o
 - `BOARD_COLUMN_OPENED`: The case-sensitive column name of the column you'd like the task to be moved to once the PR has been opened
 - `BOARD_COLUMN_MERGED`: The case-sensitive column name of the column you'd like the task to be moved to once the PR has been merged
 - `BOARD_COLUMN_CLOSED`: The case-sensitive column name of the column you'd like the task to be moved to if the PR was closed without being merged
+- `BOARD_COLUMN_FEEDBACK`: The case-sensitive column name of the column you would like the task to be moved to when the PR receives feedback
 
 The column names will be checked against all board columns in the task's project, this will be using a `contains()` method so you may specify part of the name instead of the full name, however this `contains()` check is case-sensitive. The first matching column will be used.
 

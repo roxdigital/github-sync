@@ -117,6 +117,17 @@ teamwork::add_tag() {
   fi
 }
 
+teamwork::update_estimation() {
+  local -r estimation=$1
+
+  response=$(curl -X "PUT" "$TEAMWORK_URI/projects/api/v1/tasks/$TEAMWORK_TASK_ID.json" \
+      -u "$TEAMWORK_API_TOKEN"':' \
+      -H 'Content-Type: application/json; charset=utf-8' \
+      -d "{ \"todo-item\": { \"estimated-minutes\": \"${estimation//\"/}\" } }" )
+
+  log::message "$response"
+}
+
 teamwork::remove_tag() {
   local -r tag_name=$1
 
@@ -162,6 +173,7 @@ ${pr_body}
 
   teamwork::add_tag "PR Open"
   teamwork::move_task_to_column "$BOARD_COLUMN_OPENED"
+  teamwork::update_estimation 15
 }
 
 teamwork::pull_request_closed() {
@@ -198,7 +210,9 @@ teamwork::pull_request_review_submitted() {
   local -r comment=$(github::get_review_comment)
 
   # Only add a message if the PR has been approved
-  if [ "$review_state" == "approved" ]; then
+  if [ "$review_state" != "approved" ]; then
+    teamwork::move_task_to_column "$BOARD_COLUMN_FEEDBACK"
+  elif [ "$review_state" == "approved" ]; then
     teamwork::add_comment "
 **$user** submitted a review to the PR: **$pr_title**
 [$pr_url]($pr_url)
@@ -209,6 +223,7 @@ Review: **$review_state**
 $comment
 "
     teamwork::add_tag "PR Approved"
+    teamwork::update_estimation 0
   fi
 }
 

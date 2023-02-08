@@ -15,19 +15,23 @@ inputs:
     required: true
   AUTOMATIC_TAGGING:
     description: 'Do you want to enable automatic tagging: true/false'
-    required: false
+    required: true
   BOARD_COLUMN_OPENED:
     description: 'The case-sensitive column name of the column you would like the task to be moved to once the PR has been opened'
     required: false
-    default: ''
+    default: 'Testing ROX'
   BOARD_COLUMN_MERGED:
     description: 'The case-sensitive column name of the column you would like the task to be moved to once the PR has been merged'
     required: false
-    default: ''
+    default: 'Testing klant/PO'
   BOARD_COLUMN_CLOSED:
     description: 'The case-sensitive column name of the column you would like the task to be moved to if the PR was closed without being merged'
     required: false
-    default: ''
+    default: 'To do'
+  BOARD_COLUMN_FEEDBACK:
+    description: 'The case-sensitive column name of the column you would like the task to be moved to when the PR receives feedback'
+    required: false
+    default: 'In progress'
 runs:
   using: 'docker'
   image: 'Dockerfile'
@@ -39,3 +43,4 @@ runs:
     - ${{ inputs.BOARD_COLUMN_OPENED }}
     - ${{ inputs.BOARD_COLUMN_MERGED }}
     - ${{ inputs.BOARD_COLUMN_CLOSED }}
+    - ${{ inputs.BOARD_COLUMN_FEEDBACK }}
