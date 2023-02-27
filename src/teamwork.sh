@@ -213,6 +213,15 @@ teamwork::pull_request_review_submitted() {
   # Only add a message if the PR has been approved
   if [ "$review_state" != "approved" ]; then
     teamwork::move_task_to_column "$BOARD_COLUMN_FEEDBACK"
+    teamwork::add_comment "
+**$user** requested changes to the PR: **$pr_title**
+[$pr_url]($pr_url)
+
+---
+
+Review: **$review_state**
+$comment
+"
   elif [ "$review_state" == "approved" ]; then
     teamwork::add_comment "
 **$user** submitted a review to the PR: **$pr_title**
