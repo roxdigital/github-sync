@@ -211,7 +211,7 @@ teamwork::pull_request_review_submitted() {
   local -r comment=$(github::get_review_comment)
 
   # Only add a message if the PR has been approved
-  if [ "$review_state" != "approved" ]; then
+  if [ "$review_state" == "changes_requested" ]; then
     teamwork::move_task_to_column "$BOARD_COLUMN_FEEDBACK"
     teamwork::add_comment "
 **$user** requested changes to the PR: **$pr_title**
