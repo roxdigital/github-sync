@@ -123,7 +123,7 @@ teamwork::update_estimation() {
   response=$(curl -X "PUT" "$TEAMWORK_URI/projects/api/v1/tasks/$TEAMWORK_TASK_ID.json" \
       -u "$TEAMWORK_API_TOKEN"':' \
       -H 'Content-Type: application/json; charset=utf-8' \
-      -d "{ \"todo-item\": { \"estimated-minutes\": \"${estimation//\"/}\" } }" )
+      -d "{ \"todo-item\": { \"estimated-minutes\": $estimation } }" )
 
   log::message "$response"
 }
@@ -191,6 +191,7 @@ teamwork::pull_request_closed() {
   teamwork::remove_tag "PR Open"
   teamwork::remove_tag "PR Approved"
   teamwork::move_task_to_column "$BOARD_COLUMN_MERGED"
+  teamwork::update_estimation 0
   else
     teamwork::add_comment "
 **$user** closed a PR without merging: **$pr_title**
