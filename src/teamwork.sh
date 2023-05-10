@@ -169,11 +169,7 @@ teamwork::pull_request_closed() {
     teamwork::add_comment "
 **$user** merged the [$pr_url]($pr_url) PR for this task:
 
----
-
 ${pr_body}
-
----
   "
     teamwork::move_task_to_column "$BOARD_COLUMN_MERGED"
     teamwork::update_estimation 0
