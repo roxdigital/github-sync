@@ -85,7 +85,7 @@ teamwork::move_task_to_column() {
 
 teamwork::add_comment() {
   local -r body=$1
-  local -r notify=$2:-false
+  local -r notify="${2:-false}"
 
   if [ "$ENV" == "test" ]; then
     log::message "Test - Simulate request. Task ID: $TEAMWORK_TASK_ID - Comment: ${body//\"/}"
