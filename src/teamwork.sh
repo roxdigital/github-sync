@@ -167,7 +167,7 @@ teamwork::pull_request_closed() {
 
   if [ "$pr_merged" == "true" ]; then
     teamwork::add_comment "
-**$user** merged the [$pr_url]($pr_url) PR for this task:
+**$user** merged the [$pr_title]($pr_url) PR for this task:
 
 ${pr_body}
   "
