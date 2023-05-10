@@ -163,17 +163,18 @@ teamwork::pull_request_closed() {
   local -r pr_url=$(github::get_pr_url)
   local -r pr_title=$(github::get_pr_title)
   local -r pr_merged=$(github::get_pr_merged)
-  local -r pr_body=$(github::get_pr_body)
+  local -r pr_body=$(github::get_pr_body_without_task)
 
   if [ "$pr_merged" == "true" ]; then
     teamwork::add_comment "
-    **$user** merged the [$pr_title]($pr_url) PR for this task.
+**$user** merged the [$pr_url]($pr_url) PR for this task:
 
-    ---
+---
 
-    ${pr_body}
+${pr_body}
 
-    " true
+---
+  "
     teamwork::move_task_to_column "$BOARD_COLUMN_MERGED"
     teamwork::update_estimation 0
   else
