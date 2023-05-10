@@ -62,6 +62,6 @@ github::print_all_data() {
 
 github::get_pr_body_without_task() {
   local -r pr_body=$(github::get_pr_body)
-  local output=$(echo "$pr_body" | sed -E 's/#### Description of the changes(.*)/\n#### Description of the changes\1/g')
+  local output=$(echo "$pr_body" | sed -n '/^#### Description/,$p')
   log::message "$output"
 }
