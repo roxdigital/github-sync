@@ -6,7 +6,7 @@ teamwork::get_task_id_from_body() {
 
   pat='tasks\/([0-9]{1,})'
   while [[ $body =~ $pat ]]; do
-    task_ids+=( "${BASH_REMATCH[1]}" )
+    task_ids+=("${BASH_REMATCH[1]}")
     body=${body#*"${BASH_REMATCH[0]}"}
   done
 
@@ -25,7 +25,7 @@ teamwork::get_project_id_from_task() {
   fi
 
   response=$(
-    curl "$TEAMWORK_URI/projects/api/v1/tasks/$task_id.json" -u "$TEAMWORK_API_TOKEN"':' |\
+    curl "$TEAMWORK_URI/projects/api/v1/tasks/$task_id.json" -u "$TEAMWORK_API_TOKEN"':' |
       jq -r '.["todo-item"]["project-id"]'
   )
   echo "$response"
@@ -44,7 +44,7 @@ teamwork::get_matching_board_column_id() {
   fi
 
   response=$(
-    curl "$TEAMWORK_URI/projects/$TEAMWORK_PROJECT_ID/boards/columns.json" -u "$TEAMWORK_API_TOKEN"':' |\
+    curl "$TEAMWORK_URI/projects/$TEAMWORK_PROJECT_ID/boards/columns.json" -u "$TEAMWORK_API_TOKEN"':' |
       jq -r --arg column_name "$column_name" '[.columns[] | select(.name | contains($column_name))] | map(.id)[0]'
   )
 
@@ -76,9 +76,9 @@ teamwork::move_task_to_column() {
   fi
 
   response=$(curl -X "PUT" "$TEAMWORK_URI/tasks/$TEAMWORK_TASK_ID.json" \
-      -u "$TEAMWORK_API_TOKEN"':' \
-      -H 'Content-Type: application/json; charset=utf-8' \
-      -d "{ \"todo-item\": { \"columnId\": $column_id } }" )
+    -u "$TEAMWORK_API_TOKEN"':' \
+    -H 'Content-Type: application/json; charset=utf-8' \
+    -d "{ \"todo-item\": { \"columnId\": $column_id } }")
 
   log::message "$response"
 }
@@ -92,9 +92,9 @@ teamwork::add_comment() {
   fi
 
   response=$(curl -X "POST" "$TEAMWORK_URI/projects/api/v1/tasks/$TEAMWORK_TASK_ID/comments.json" \
-       -u "$TEAMWORK_API_TOKEN"':' \
-       -H 'Content-Type: application/json; charset=utf-8' \
-       -d "{ \"comment\": { \"body\": \"${body//\"/}\", \"notify\": false, \"content-type\": \"text\", \"isprivate\": false } }" )
+    -u "$TEAMWORK_API_TOKEN"':' \
+    -H 'Content-Type: application/json; charset=utf-8' \
+    -d "{ \"comment\": { \"body\": \"${body//\"/}\", \"notify\": false, \"content-type\": \"text\", \"isprivate\": false } }")
 
   log::message "$response"
 }
@@ -109,9 +109,9 @@ teamwork::add_tag() {
 
   if [ "$AUTOMATIC_TAGGING" == true ]; then
     response=$(curl -X "PUT" "$TEAMWORK_URI/projects/api/v1/tasks/$TEAMWORK_TASK_ID/tags.json" \
-       -u "$TEAMWORK_API_TOKEN"':' \
-       -H 'Content-Type: application/json; charset=utf-8' \
-       -d "{ \"tags\": { \"content\": \"${tag_name//\"/}\" } }" )
+      -u "$TEAMWORK_API_TOKEN"':' \
+      -H 'Content-Type: application/json; charset=utf-8' \
+      -d "{ \"tags\": { \"content\": \"${tag_name//\"/}\" } }")
 
     log::message "$response"
   fi
@@ -121,9 +121,9 @@ teamwork::update_estimation() {
   local -r estimation=$1
 
   response=$(curl -X "PUT" "$TEAMWORK_URI/projects/api/v1/tasks/$TEAMWORK_TASK_ID.json" \
-      -u "$TEAMWORK_API_TOKEN"':' \
-      -H 'Content-Type: application/json; charset=utf-8' \
-      -d "{ \"todo-item\": { \"estimated-minutes\": $estimation } }" )
+    -u "$TEAMWORK_API_TOKEN"':' \
+    -H 'Content-Type: application/json; charset=utf-8' \
+    -d "{ \"todo-item\": { \"estimated-minutes\": $estimation } }")
 
   log::message "$response"
 }
@@ -138,9 +138,9 @@ teamwork::remove_tag() {
 
   if [ "$AUTOMATIC_TAGGING" == true ]; then
     response=$(curl -X "PUT" "$TEAMWORK_URI/projects/api/v1/tasks/$TEAMWORK_TASK_ID/tags.json" \
-         -u "$TEAMWORK_API_TOKEN"':' \
-         -H 'Content-Type: application/json; charset=utf-8' \
-         -d "{ \"tags\": { \"content\": \"${tag_name//\"/}\" },\"removeProvidedTags\":\"true\" }" )
+      -u "$TEAMWORK_API_TOKEN"':' \
+      -H 'Content-Type: application/json; charset=utf-8' \
+      -d "{ \"tags\": { \"content\": \"${tag_name//\"/}\" },\"removeProvidedTags\":\"true\" }")
 
     log::message "$response"
   fi
@@ -149,29 +149,10 @@ teamwork::remove_tag() {
 teamwork::pull_request_opened() {
   local -r pr_url=$(github::get_pr_url)
   local -r pr_title=$(github::get_pr_title)
-  local -r head_ref=$(github::get_head_ref)
-  local -r base_ref=$(github::get_base_ref)
   local -r user=$(github::get_sender_user)
-  local -r pr_stats=$(github::get_pr_patch_stats)
-  local -r pr_body=$(github::get_pr_body)
-  IFS=" " read -r -a pr_stats_array <<< "$pr_stats"
 
-  teamwork::add_comment "
-**$user** opened a PR: **$pr_title**
-[$pr_url]($pr_url)
-\`$base_ref\` ⬅️ \`$head_ref\`
+  teamwork::add_comment "**$user** opened [$pr_title]($pr_url)"
 
----
-
-${pr_body}
-
----
-
-🔢 ${pr_stats_array[0]} commits / 📝 ${pr_stats_array[1]} files updated / ➕ ${pr_stats_array[2]} additions / ➖ ${pr_stats_array[3]} deletions
-
-  "
-
-  teamwork::add_tag "PR Open"
   teamwork::move_task_to_column "$BOARD_COLUMN_OPENED"
   teamwork::update_estimation 15
 }
@@ -181,25 +162,23 @@ teamwork::pull_request_closed() {
   local -r pr_url=$(github::get_pr_url)
   local -r pr_title=$(github::get_pr_title)
   local -r pr_merged=$(github::get_pr_merged)
+  local -r pr_body=$(github::get_pr_body)
 
   if [ "$pr_merged" == "true" ]; then
     teamwork::add_comment "
-**$user** merged a PR: **$pr_title**
-[$pr_url]($pr_url)
-"
-  teamwork::add_tag "PR Merged"
-  teamwork::remove_tag "PR Open"
-  teamwork::remove_tag "PR Approved"
-  teamwork::move_task_to_column "$BOARD_COLUMN_MERGED"
-  teamwork::update_estimation 0
+    **$user** merged [$pr_title]($pr_url).
+    This feature is ready for testing by the client.
+
+    ---
+
+    ${pr_body}
+
+    "
+    teamwork::move_task_to_column "$BOARD_COLUMN_MERGED"
+    teamwork::update_estimation 0
   else
-    teamwork::add_comment "
-**$user** closed a PR without merging: **$pr_title**
-[$pr_url]($pr_url)
-"
-    teamwork::remove_tag "PR Open"
-    teamwork::remove_tag "PR Approved"
-    teamwork::move_task_to_column "$BOARD_COLUMN_CLOSED"
+    teamwork::add_comment "**$user** closed [$pr_title]($pr_url) without merging."
+    teamwork::move_task_to_column "$BOARD_COLUMN_FEEDBACK"
   fi
 }
 
@@ -208,36 +187,15 @@ teamwork::pull_request_review_submitted() {
   local -r pr_url=$(github::get_pr_url)
   local -r pr_title=$(github::get_pr_title)
   local -r review_state=$(github::get_review_state)
-  local -r comment=$(github::get_review_comment)
 
-  # Only add a message if the PR has been approved
   if [ "$review_state" == "changes_requested" ]; then
     teamwork::move_task_to_column "$BOARD_COLUMN_FEEDBACK"
-    teamwork::add_comment "
-**$user** requested changes to the PR: **$pr_title**
-[$pr_url]($pr_url)
-
----
-
-Review: **$review_state**
-$comment
-"
-  elif [ "$review_state" == "approved" ]; then
-    teamwork::add_comment "
-**$user** submitted a review to the PR: **$pr_title**
-[$pr_url]($pr_url)
-
----
-
-Review: **$review_state**
-$comment
-"
-    teamwork::add_tag "PR Approved"
-    teamwork::update_estimation 0
+    teamwork::add_comment "**$user** requested changes to [$pr_title]($pr_url)"
   fi
 }
 
 teamwork::pull_request_review_dismissed() {
   local -r user=$(github::get_sender_user)
-  teamwork::add_comment "Review dismissed by $user"
+  teamwork::move_task_to_column "$BOARD_COLUMN_OPENED"
+  teamwork::add_comment "Review dismissed by **$user**"
 }
