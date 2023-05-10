@@ -85,6 +85,7 @@ teamwork::move_task_to_column() {
 
 teamwork::add_comment() {
   local -r body=$1
+  local -r notify=$2:-false
 
   if [ "$ENV" == "test" ]; then
     log::message "Test - Simulate request. Task ID: $TEAMWORK_TASK_ID - Comment: ${body//\"/}"
@@ -94,7 +95,7 @@ teamwork::add_comment() {
   response=$(curl -X "POST" "$TEAMWORK_URI/tasks/$TEAMWORK_TASK_ID/comments.json" \
     -u "$TEAMWORK_API_TOKEN"':' \
     -H 'Content-Type: application/json; charset=utf-8' \
-    -d "{ \"comment\": { \"body\": \"${body//\"/}\", \"notify\": false, \"content-type\": \"text\", \"isprivate\": false } }")
+    -d "{ \"comment\": { \"body\": \"${body//\"/}\", \"notify\": $notify, \"content-type\": \"text\", \"isprivate\": false } }")
 
   log::message "$response"
 }
@@ -151,7 +152,7 @@ teamwork::pull_request_opened() {
   local -r pr_title=$(github::get_pr_title)
   local -r user=$(github::get_sender_user)
 
-  teamwork::add_comment "**$user** opened [$pr_title]($pr_url)"
+  teamwork::add_comment "**$user** opened the [$pr_title]($pr_url) PR for this task."
 
   teamwork::move_task_to_column "$BOARD_COLUMN_OPENED"
   teamwork::update_estimation 15
@@ -166,18 +167,17 @@ teamwork::pull_request_closed() {
 
   if [ "$pr_merged" == "true" ]; then
     teamwork::add_comment "
-    **$user** merged [$pr_title]($pr_url).
-    This feature is ready for testing by the client.
+    **$user** merged the [$pr_title]($pr_url) PR for this task.
 
     ---
 
     ${pr_body}
 
-    "
+    " true
     teamwork::move_task_to_column "$BOARD_COLUMN_MERGED"
     teamwork::update_estimation 0
   else
-    teamwork::add_comment "**$user** closed [$pr_title]($pr_url) without merging."
+    teamwork::add_comment "**$user** closed the [$pr_title]($pr_url) PR for this task."
     teamwork::move_task_to_column "$BOARD_COLUMN_FEEDBACK"
   fi
 }
@@ -190,12 +190,12 @@ teamwork::pull_request_review_submitted() {
 
   if [ "$review_state" == "changes_requested" ]; then
     teamwork::move_task_to_column "$BOARD_COLUMN_FEEDBACK"
-    teamwork::add_comment "**$user** requested changes to [$pr_title]($pr_url)"
+    teamwork::add_comment "**$user** requested changes to the [$pr_title]($pr_url) PR for this task."
   fi
 }
 
 teamwork::pull_request_review_dismissed() {
   local -r user=$(github::get_sender_user)
   teamwork::move_task_to_column "$BOARD_COLUMN_OPENED"
-  teamwork::add_comment "Review dismissed by **$user**"
+  teamwork::add_comment "Review on the [$pr_title]($pr_url) PR for this task dismissed by **$user**."
 }
